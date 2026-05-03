@@ -11,6 +11,15 @@
       <p class="subtitle">Tell us about yourself and we'll suggest the perfect outfit</p>
 
       <div class="form-box">
+
+        <label>Language</label>
+        <select id="language">
+       <option value="English">English</option>
+        <option value="Hindi">Hindi</option>
+        <option value="Malayalam">Malayalam</option>
+        <option value="Tamil">Tamil</option>
+        <option value="Telugu">Telugu</option>
+        </select>
         <label>Gender</label>
 
     <select id="gender">
@@ -26,6 +35,8 @@
           <option>Party / Night Out</option>
           <option>Wedding / Formal</option>
         </select>
+        <label>Upload Your Photo <span style="font-size:11px; color:#888;">(optional — for better suggestions)</span></label>
+        <input type="file" id="photo" accept="image/*">
         <label>Budget</label>
         <select id="budget">
         <option>₹500 - ₹1500</option>
