@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Outfit Suggester</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+
+    <div class="container">
+      <h1>👗 Outfit Suggester</h1>
+      <p class="subtitle">Tell us about yourself and we'll suggest the perfect outfit</p>
+
+      <div class="form-box">
+        <label>Gender</label>
+
+    <select id="gender">
+    <option>Male</option>
+    <option>Female</option>
+    <option>Prefer not to say</option>
+    </select>
+
+        <label>Occasion</label>
+        <select id="occasion">
+          <option>Casual Day Out</option>
+          <option>Office / College</option>
+          <option>Party / Night Out</option>
+          <option>Wedding / Formal</option>
+        </select>
+        <label>Budget</label>
+        <select id="budget">
+        <option>₹500 - ₹1500</option>
+        <option>₹1500 - ₹3000</option>
+        <option>₹3000 - ₹5000</option>
+        <option>Above ₹5000</option>
+        </select>
+        <label>Favourite Colour</label>
+        <input type="text" id="color" placeholder="e.g. blue, red, pastel pink">
+
+        <label>Your Style</label>
+        <select id="style">
+          <option>Trendy</option>
+          <option>Classic</option>
+          <option>Minimalist</option>
+          <option>Ethnic / Traditional</option>
+          <option>Streetwear</option>
+        </select>
+
+        <button id="btn">✨ Suggest My Outfit</button>
+
+      </div>
+
+      <div class="result-box" id="result">
+        Your outfit suggestion will appear here...
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
