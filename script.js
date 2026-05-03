@@ -22,7 +22,7 @@ if (photoFile) {
       ✨ Finding your perfect outfits...
     </div>`;
 
-  const apiKey = "AIzaSyAodP_ipZPVk4vymgNULxkTF-HsGwPu0kM";
+  const apiKey = "key here";
 
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
     method: "POST",
