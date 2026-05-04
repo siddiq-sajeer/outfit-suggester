@@ -1,26 +1,34 @@
-document.getElementById("btn").addEventListener("click", async function() {
+document.getElementById("btn").addEventListener("click", async function () {
+
   const language = document.getElementById("language").value;
-  const photoFile = document.getElementById("photo").files[0];
-let photoBase64 = null;
-
-if (photoFile) {
-  photoBase64 = await new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(",")[1]);
-    reader.readAsDataURL(photoFile);
-  });
-}
-
   const gender = document.getElementById("gender").value;
   const occasion = document.getElementById("occasion").value;
-  const budget = document.getElementById("budget").value;
   const color = document.getElementById("color").value;
   const style = document.getElementById("style").value;
+  const budget = document.getElementById("budget").value;
+  const photoFile = document.getElementById("photo").files[0];
 
+  // Show results section with loading
+  document.getElementById("results-section").style.display = "block";
   document.getElementById("result").innerHTML = `
-    <div style="text-align:center; color:#7f77dd;">
-      ✨ Finding your perfect outfits...
+    <div class="loading-state">
+      <div class="loading-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="loading-text">AI is curating your outfits...</div>
     </div>`;
+
+  document.getElementById("results-section").scrollIntoView({ behavior: "smooth" });
+
+  // Handle photo upload
+  let photoBase64 = null;
+  if (photoFile) {
+    photoBase64 = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.readAsDataURL(photoFile);
+    });
+  }
 
   const apiKey = "key here";
 
@@ -29,120 +37,131 @@ if (photoFile) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{
-  parts: [
-    ...(photoBase64 ? [{
-      inline_data: {
-        mime_type: photoFile.type,
-        data: photoBase64
-      }
-    }] : []),
-    {
-      text: `You are a fashion expert. ${photoBase64 ? 
-        'Look at this person in the photo and suggest outfits based on their appearance, skin tone and body type.' : 
-        'Suggest 3 outfits based on the preferences below.'}
-      
-      - Reply in this language: ${language}
-      - Gender: ${gender}
-      - Occasion: ${occasion}
-      - Favourite colour: ${color}
-      - Style: ${style}
-      - Budget: ${budget}
+        parts: [
+          ...(photoBase64 ? [{
+            inline_data: { mime_type: photoFile.type, data: photoBase64 }
+          }] : []),
+          {
+            text: `You are a fashion expert. ${photoBase64 ?
+              'Look at this person in the photo and suggest outfits based on their appearance, skin tone and body type.' :
+              'Suggest 3 outfits based on the preferences below.'}
 
-      You MUST reply in this EXACT format, nothing else before or after:
+            - Reply in this language: ${language}
+            - Gender: ${gender}
+            - Occasion: ${occasion}
+            - Favourite colour: ${color}
+            - Style: ${style}
+            - Budget: ${budget}
 
-      OUTFIT1_START
-      NAME: [catchy outfit name]
-      TOP: [top wear]
-      BOTTOM: [bottom wear]
-      FOOTWEAR: [footwear]
-      ACCESSORY: [one accessory]
-      TIP: [one styling tip]
-      OUTFIT1_END
+            You MUST reply in this EXACT format:
 
-      OUTFIT2_START
-      NAME: [catchy outfit name]
-      TOP: [top wear]
-      BOTTOM: [bottom wear]
-      FOOTWEAR: [footwear]
-      ACCESSORY: [one accessory]
-      TIP: [one styling tip]
-      OUTFIT2_END
+            OUTFIT1_START
+            NAME: [catchy outfit name]
+            TOP: [top wear]
+            BOTTOM: [bottom wear]
+            FOOTWEAR: [footwear]
+            ACCESSORY: [one accessory]
+            TIP: [one styling tip]
+            OUTFIT1_END
 
-      OUTFIT3_START
-      NAME: [catchy outfit name]
-      TOP: [top wear]
-      BOTTOM: [bottom wear]
-      FOOTWEAR: [footwear]
-      ACCESSORY: [one accessory]
-      TIP: [one styling tip]
-      OUTFIT3_END
+            OUTFIT2_START
+            NAME: [catchy outfit name]
+            TOP: [top wear]
+            BOTTOM: [bottom wear]
+            FOOTWEAR: [footwear]
+            ACCESSORY: [one accessory]
+            TIP: [one styling tip]
+            OUTFIT2_END
 
-      IMPORTANT: Give ONLY 3 outfits. Keep it practical and shoppable in India.`
-    }
-  ]
-}]
+            OUTFIT3_START
+            NAME: [catchy outfit name]
+            TOP: [top wear]
+            BOTTOM: [bottom wear]
+            FOOTWEAR: [footwear]
+            ACCESSORY: [one accessory]
+            TIP: [one styling tip]
+            OUTFIT3_END
+
+            IMPORTANT: Give ONLY 3 outfits. Keep it practical and shoppable in India.`
+          }
+        ]
+      }]
     })
   });
 
   const data = await response.json();
   const text = data.candidates[0].content.parts[0].text;
 
-  const outfits = text.trim().split(/OUTFIT \d+:/g).filter(o => o.trim());
+  const icons = ["👔", "✨", "🌟"];
+  const outfitBlocks = [
+    text.match(/OUTFIT1_START([\s\S]*?)OUTFIT1_END/),
+    text.match(/OUTFIT2_START([\s\S]*?)OUTFIT2_END/),
+    text.match(/OUTFIT3_START([\s\S]*?)OUTFIT3_END/)
+  ];
 
-  const titles = [...text.matchAll(/OUTFIT \d+:\s*(.+)/g)].map(m => m[1].trim());
+  let html = "";
 
-  const icons = ["👗", "✨", "🌟"];
-  const colors = ["#f5f0ff", "#fff0f5", "#f0f5ff"];
-  const borders = ["#7f77dd", "#dd77a8", "#7799dd"];
+  outfitBlocks.forEach((block, i) => {
+    if (!block) return;
+    const content = block[1].trim();
+    const lines = content.split("\n").map(l => l.trim()).filter(l => l);
 
-  let html = `<p style="font-size:13px; color:#888; margin:0 0 16px;">Here are 3 outfits picked just for you 👇</p>`;
+    let name = "", top = "", bottom = "", footwear = "", accessory = "", tip = "";
 
-  outfits.forEach((outfit, i) => {
-    const lines = outfit.trim().split('\n').filter(l => l.trim());
-    let cardContent = '';
+    lines.forEach(line => {
+      if (line.startsWith("NAME:")) name = line.replace("NAME:", "").trim();
+      else if (line.startsWith("TOP:")) top = line.replace("TOP:", "").trim();
+      else if (line.startsWith("BOTTOM:")) bottom = line.replace("BOTTOM:", "").trim();
+      else if (line.startsWith("FOOTWEAR:")) footwear = line.replace("FOOTWEAR:", "").trim();
+      else if (line.startsWith("ACCESSORY:")) accessory = line.replace("ACCESSORY:", "").trim();
+      else if (line.startsWith("TIP:")) tip = line.replace("TIP:", "").trim();
+    });
 
-   lines.forEach(line => {
-if (line.includes('TOP:')) 
-    {
-    cardContent += `<div class="outfit-row"><span class="outfit-label">👕 Top</span><span class="outfit-value">${line.replace('TOP:', '').trim()}</span></div>`;
-  } else if (line.includes('INNERWEAR:')) {
-    cardContent += `<div class="outfit-row"><span class="outfit-label">👔 Innerwear</span><span class="outfit-value">${line.replace('INNERWEAR:', '').trim()}</span></div>`;
-  } else if (line.includes('BOTTOM:')) {
-    cardContent += `<div class="outfit-row"><span class="outfit-label">👖 Bottom</span><span class="outfit-value">${line.replace('BOTTOM:', '').trim()}</span></div>`;
-  } else if (line.includes('FOOTWEAR:')) {
-    cardContent += `<div class="outfit-row"><span class="outfit-label">👟 Footwear</span><span class="outfit-value">${line.replace('FOOTWEAR:', '').trim()}</span></div>`;
-  } else if (line.includes('ACCESSORY:')) {
-    cardContent += `<div class="outfit-row"><span class="outfit-label">💍 Accessory</span><span class="outfit-value">${line.replace('ACCESSORY:', '').trim()}</span></div>`;
-  } else if (line.includes('TIP:')) {
-    cardContent += `<div class="outfit-tip">💡 ${line.replace('TIP:', '').trim()}</div>`;
-  }
+    const topQuery = encodeURIComponent(top);
+    const bottomQuery = encodeURIComponent(bottom);
+    const footwearQuery = encodeURIComponent(footwear);
 
-
-  if (line.includes('TIP:')) {
-    cardContent += `<div class="outfit-tip">💡 ${line.replace('TIP:', '').trim()}</div>`;
-} else if (line.includes('TOP:') || line.includes('INNERWEAR') || line.includes('BOTTOM:') || line.includes('FOOTWEAR:')) {
-    const item = line.split(':')[1].trim();
-    const query = encodeURIComponent(item);
-    cardContent += `
-      <div class="shop-links">
-        🛍️ Shop:
-        <a href="https://www.myntra.com/${query}" target="_blank">Myntra</a>
-        <a href="https://www.meesho.com/search?q=${query}" target="_blank">Meesho</a>
-        <a href="https://www.amazon.in/s?k=${query}" target="_blank">Amazon</a>
+    html += `
+      <div class="outfit-card">
+        <div class="card-header">
+          <div class="card-num">0${i + 1}</div>
+          <div class="card-name">${name}</div>
+          <div class="card-icon">${icons[i]}</div>
+        </div>
+        <div class="card-body">
+          <div class="outfit-row">
+            <span class="outfit-label">👕 Top</span>
+            <span class="outfit-value">${top}</span>
+          </div>
+          <div class="outfit-row">
+            <span class="outfit-label">👖 Bottom</span>
+            <span class="outfit-value">${bottom}</span>
+          </div>
+          <div class="outfit-row">
+            <span class="outfit-label">👟 Footwear</span>
+            <span class="outfit-value">${footwear}</span>
+          </div>
+          <div class="outfit-row">
+            <span class="outfit-label">💍 Accessory</span>
+            <span class="outfit-value">${accessory}</span>
+          </div>
+        </div>
+        ${tip ? `<div class="outfit-tip">💡 ${tip}</div>` : ""}
+        <div class="shop-section">
+          <span class="shop-label">Shop</span>
+          <div class="shop-links">
+            <a href="https://www.myntra.com/${topQuery}" target="_blank">Myntra</a>
+            <a href="https://www.meesho.com/search?q=${topQuery}" target="_blank">Meesho</a>
+            <a href="https://www.amazon.in/s?k=${topQuery}" target="_blank">Amazon</a>
+          </div>
+        </div>
+        <div class="card-footer">
+          <a class="share-btn" href="https://wa.me/?text=${encodeURIComponent(`Check out this outfit!\n\n${name}\n👕 ${top}\n👖 ${bottom}\n👟 ${footwear}\n💍 ${accessory}\n\n💡 ${tip}\n\nGenerated by DRIP AI`)}" target="_blank">
+            📲 Share on WhatsApp
+          </a>
+        </div>
       </div>`;
-}
-});
-
-   html += `
-  <div class="outfit-card" style="border-color:${borders[i]}; background:${colors[i]}">
-    <div class="outfit-title" style="color:${borders[i]}">${icons[i]} Outfit ${i+1}: ${titles[i] || ''}</div>
-    ${cardContent}
-    <a class="share-btn" href="https://wa.me/?text=${encodeURIComponent(`Check out this outfit suggestion!\n\nOutfit ${i+1}: ${titles[i]}\n\n${outfits[i].trim()}\n\nGenerated by AI Outfit Suggester`)}" target="_blank">
-      📲 Share on WhatsApp
-    </a>
-  </div>`;
   });
 
   document.getElementById("result").innerHTML = html;
-
 });
